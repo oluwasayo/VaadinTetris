@@ -11,14 +11,9 @@ import com.vaadin.annotations.Title;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.server.FontAwesome;
-import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.shared.ui.label.ContentMode;
-import com.vaadin.shared.ui.ui.Transport;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
-import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
@@ -29,7 +24,7 @@ import org.vaadin.viritin.button.PrimaryButton;
 import org.vaadin.viritin.layouts.MHorizontalLayout;
 
 @Title("Vaadin Tetris")
-@Push(transport = Transport.LONG_POLLING)
+@Push
 @Theme("valo")
 public class TetrisUI extends UI {
 
