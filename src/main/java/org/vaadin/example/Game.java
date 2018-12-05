@@ -1,4 +1,4 @@
-package org.vaadin.sami.tetris;
+package org.vaadin.example;
 
 /**
  * Tetis game class.

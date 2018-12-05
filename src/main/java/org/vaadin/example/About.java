@@ -1,4 +1,4 @@
-package org.vaadin.sami.javaday;
+package org.vaadin.example;
 
 import org.vaadin.viritin.components.DisclosurePanel;
 import org.vaadin.viritin.label.RichText;

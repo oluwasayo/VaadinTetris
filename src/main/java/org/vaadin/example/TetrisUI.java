@@ -1,31 +1,27 @@
-package org.vaadin.sami.javaday;
+package org.vaadin.example;
 
 import org.vaadin.hezamu.canvas.Canvas;
-import org.vaadin.sami.tetris.Game;
-import org.vaadin.sami.tetris.Grid;
-import org.vaadin.sami.tetris.Tetromino;
 
 import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Title;
-import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.server.FontAwesome;
 import com.vaadin.server.VaadinRequest;
-import com.vaadin.server.VaadinServlet;
+import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
-import javax.servlet.annotation.WebServlet;
 import org.vaadin.viritin.button.PrimaryButton;
 import org.vaadin.viritin.layouts.MHorizontalLayout;
 
 @Title("Vaadin Tetris")
 @Push
 @Theme("valo")
+@SpringUI
 public class TetrisUI extends UI {
 
     private static final int PAUSE_TIME_MS = 500;
@@ -234,10 +230,4 @@ public class TetrisUI extends UI {
             }
         }
     }
-
-    @WebServlet(urlPatterns = "/*", asyncSupported = true)
-    @VaadinServletConfiguration(ui = TetrisUI.class, productionMode = false)
-    public static class MyUIServlet extends VaadinServlet {
-    }
-
 }
