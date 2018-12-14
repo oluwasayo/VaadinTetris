@@ -3,6 +3,7 @@ package org.vaadin.example;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -13,6 +14,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.ui.Transport;
 import org.vaadin.marcus.shortcut.Shortcut;
 import org.vaadin.pekkam.Canvas;
+
+import java.util.Arrays;
 
 // The most efficient transport system
 @Push(transport = Transport.WEBSOCKET)
@@ -50,7 +53,6 @@ public class MainView extends VerticalLayout {
             game.moveLeft();
             drawGameState();
         });
-
         Shortcut.add(this, Key.ARROW_LEFT, leftBtn::click);
 
         // Button for moving right
@@ -58,13 +60,11 @@ public class MainView extends VerticalLayout {
         rightBtn.addClickListener(e -> {
             game.moveRight();
             drawGameState();
-
         });
         Shortcut.add(this, Key.ARROW_RIGHT, rightBtn::click);
 
         // Button for rotating clockwise
-        final Button rotateCWBtn = new Button("[key down]",
-                VaadinIcon.ROTATE_RIGHT.create());
+        final Button rotateCWBtn = new Button(VaadinIcon.ROTATE_RIGHT.create());
         rotateCWBtn.addClickListener(e -> {
             game.rotateCW();
             drawGameState();
@@ -72,8 +72,7 @@ public class MainView extends VerticalLayout {
         Shortcut.add(this, Key.ARROW_DOWN, rotateCWBtn::click);
 
         // Button for rotating counter clockwise
-        final Button rotateCCWBtn = new Button("[key up]",
-                VaadinIcon.ROTATE_LEFT.create());
+        final Button rotateCCWBtn = new Button(VaadinIcon.ARROW_UP.create());
         rotateCCWBtn.addClickListener(e -> {
             game.rotateCCW();
             drawGameState();
@@ -81,7 +80,7 @@ public class MainView extends VerticalLayout {
         Shortcut.add(this, Key.ARROW_UP, rotateCCWBtn::click);
 
         // Button for dropping the piece
-        final Button dropBtn = new Button("[D]", VaadinIcon.ARROW_DOWN.create());
+        final Button dropBtn = new Button(VaadinIcon.ARROW_DOWN.create());
         dropBtn.addClickListener(e -> {
             game.drop();
             drawGameState();
@@ -103,11 +102,6 @@ public class MainView extends VerticalLayout {
             }
         });
 
-        add(new HorizontalLayout(
-                restartBtn, leftBtn, rightBtn, rotateCCWBtn, rotateCWBtn,
-                dropBtn
-        ));
-
         // Canvas for the game
         canvas = new Canvas(TILE_SIZE * PLAYFIELD_W, TILE_SIZE * PLAYFIELD_H);
 
@@ -116,6 +110,28 @@ public class MainView extends VerticalLayout {
         add(scoreLabel);
         add(canvas);
 
+        styleControlButtons(restartBtn, leftBtn, rightBtn, rotateCCWBtn, rotateCWBtn, dropBtn);
+        rotateCWBtn.addClassName("dominant-control");
+        restartBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+        final BorderLayout cursorsPanel = new BorderLayout();
+        cursorsPanel.addNorth(rotateCCWBtn);
+        cursorsPanel.addSouth(dropBtn);
+        cursorsPanel.addEast(rightBtn);
+        cursorsPanel.addWest(leftBtn);
+
+        final HorizontalLayout controlsPanel = new HorizontalLayout(cursorsPanel, restartBtn, rotateCWBtn);
+        controlsPanel.setAlignItems(Alignment.CENTER);
+        controlsPanel.setSpacing(true);
+        controlsPanel.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        controlsPanel.setWidth(canvas.getWidth());
+
+        add(controlsPanel);
+        setAlignItems(Alignment.CENTER);
+    }
+
+    private void styleControlButtons(Button... buttons) {
+        Arrays.stream(buttons).forEach(button -> button.addClassName("control-button"));
     }
 
     /**
