@@ -1,28 +1,23 @@
 package org.vaadin.example;
 
-import org.vaadin.hezamu.canvas.Canvas;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.page.Push;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.shared.ui.Transport;
+import org.vaadin.marcus.shortcut.Shortcut;
+import org.vaadin.pekkam.Canvas;
 
-import com.vaadin.annotations.Push;
-import com.vaadin.annotations.Theme;
-import com.vaadin.annotations.Title;
-import com.vaadin.event.ShortcutAction.KeyCode;
-import com.vaadin.server.FontAwesome;
-import com.vaadin.server.VaadinRequest;
-import com.vaadin.spring.annotation.SpringUI;
-import com.vaadin.ui.Button;
-import com.vaadin.ui.Label;
-import com.vaadin.ui.Notification;
-import com.vaadin.ui.Notification.Type;
-import com.vaadin.ui.UI;
-import com.vaadin.ui.VerticalLayout;
-import org.vaadin.viritin.button.PrimaryButton;
-import org.vaadin.viritin.layouts.MHorizontalLayout;
-
-@Title("Vaadin Tetris")
-@Push
-@Theme("valo")
-@SpringUI
-public class TetrisUI extends UI {
+// The most efficient transport system
+@Push(transport = Transport.WEBSOCKET)
+@Route
+public class MainView extends VerticalLayout {
 
     private static final int PAUSE_TIME_MS = 500;
 
@@ -40,94 +35,88 @@ public class TetrisUI extends UI {
     // Playfield background color
     private static final String PLAYFIELD_COLOR = "#000";
 
-    private VerticalLayout layout;
     private Canvas canvas;
     protected boolean running;
     protected Game game;
 
-    private Label scoreLabel;
+    private Span scoreLabel;
 
-    @Override
-    protected void init(VaadinRequest request) {
-        layout = new VerticalLayout();
-        layout.setSpacing(true);
-        layout.setMargin(true);
-        setContent(layout);
-        layout.addComponent(new About());
+    public MainView() {
+        add(new About());
 
         // Button for moving left
-        final Button leftBtn = new Button(FontAwesome.ARROW_LEFT);
+        final Button leftBtn = new Button(VaadinIcon.ARROW_LEFT.create());
         leftBtn.addClickListener(e -> {
             game.moveLeft();
             drawGameState();
         });
-        leftBtn.setClickShortcut(KeyCode.ARROW_LEFT);
+
+        Shortcut.add(this, Key.ARROW_LEFT, leftBtn::click);
 
         // Button for moving right
-        final Button rightBtn = new Button(FontAwesome.ARROW_RIGHT);
+        final Button rightBtn = new Button(VaadinIcon.ARROW_RIGHT.create());
         rightBtn.addClickListener(e -> {
             game.moveRight();
             drawGameState();
 
         });
-        rightBtn.setClickShortcut(KeyCode.ARROW_RIGHT);
+        Shortcut.add(this, Key.ARROW_RIGHT, rightBtn::click);
 
         // Button for rotating clockwise
         final Button rotateCWBtn = new Button("[key down]",
-                FontAwesome.ROTATE_RIGHT);
+                VaadinIcon.ROTATE_RIGHT.create());
         rotateCWBtn.addClickListener(e -> {
             game.rotateCW();
             drawGameState();
         });
-        rotateCWBtn.setClickShortcut(KeyCode.ARROW_DOWN);
+        Shortcut.add(this, Key.ARROW_DOWN, rotateCWBtn::click);
 
         // Button for rotating counter clockwise
         final Button rotateCCWBtn = new Button("[key up]",
-                FontAwesome.ROTATE_LEFT);
+                VaadinIcon.ROTATE_LEFT.create());
         rotateCCWBtn.addClickListener(e -> {
             game.rotateCCW();
             drawGameState();
         });
-        rotateCCWBtn.setClickShortcut(KeyCode.ARROW_UP);
+        Shortcut.add(this, Key.ARROW_UP, rotateCCWBtn::click);
 
         // Button for dropping the piece
-        final Button dropBtn = new Button("[space]", FontAwesome.ARROW_DOWN);
+        final Button dropBtn = new Button("[space]", VaadinIcon.ARROW_DOWN.create());
         dropBtn.addClickListener(e -> {
             game.drop();
             drawGameState();
         });
-        dropBtn.setClickShortcut(KeyCode.SPACEBAR);
+        Shortcut.add(this, Key.SPACE, dropBtn::click);
 
         // Button for restarting the game
-        final Button restartBtn = new PrimaryButton().withIcon(FontAwesome.PLAY);
+        final Button restartBtn = new Button(VaadinIcon.PLAY.create());
         restartBtn.addClickListener(e -> {
             running = !running;
             if (running) {
                 game = new Game(10, 20);
                 startGameThread();
-                restartBtn.setIcon(FontAwesome.STOP);
+                restartBtn.setIcon(VaadinIcon.STOP.create());
                 dropBtn.focus();
             } else {
-                restartBtn.setIcon(FontAwesome.PLAY);
+                restartBtn.setIcon(VaadinIcon.PLAY.create());
                 gameOver();
             }
         });
 
-        layout.addComponent(new MHorizontalLayout(
+        add(new HorizontalLayout(
                 restartBtn, leftBtn, rightBtn, rotateCCWBtn, rotateCWBtn,
                 dropBtn
         ));
 
         // Canvas for the game
-        canvas = new Canvas();
-        layout.addComponent(canvas);
-        canvas.setWidth((TILE_SIZE * PLAYFIELD_W) + "px");
-        canvas.setHeight((TILE_SIZE * PLAYFIELD_H) + "px");
-		// canvas.setBackgroundColor(PLAYFIELD_COLOR);
+        canvas = new Canvas(TILE_SIZE * PLAYFIELD_W, TILE_SIZE * PLAYFIELD_H);
+        canvas.setWidth(TILE_SIZE * PLAYFIELD_W + "px");
+        canvas.setHeight(TILE_SIZE * PLAYFIELD_H + "px");
 
         // Label for score
-        scoreLabel = new Label("");
-        layout.addComponent(scoreLabel);
+        scoreLabel = new Span("");
+        add(scoreLabel);
+        add(canvas);
 
     }
 
@@ -136,6 +125,7 @@ public class TetrisUI extends UI {
      *
      */
     protected synchronized void startGameThread() {
+        UI ui = UI.getCurrent();
         Thread t = new Thread() {
             public void run() {
 
@@ -143,13 +133,10 @@ public class TetrisUI extends UI {
                 while (running && !game.isOver()) {
 
                     // Draw the state
-                    access(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            drawGameState();
-                        }
-                    });
+                    ui.access(() -> {
+                        drawGameState();
+                    }
+                    );
 
                     // Pause for a while
                     try {
@@ -159,17 +146,15 @@ public class TetrisUI extends UI {
 
                     // Step the game forward and update score
                     game.step();
-                    updateScore();
+                    ui.access(() -> {
+                        updateScore();
+                    });
 
                 }
 
                 // Notify user that game is over
-                access(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        gameOver();
-                    }
+                ui.access(() -> {
+                    gameOver();
                 });
             }
         };
@@ -182,13 +167,7 @@ public class TetrisUI extends UI {
      *
      */
     protected synchronized void updateScore() {
-        access(new Runnable() {
-
-            @Override
-            public void run() {
-                scoreLabel.setValue("Score: " + game.getScore());
-            }
-        });
+        scoreLabel.setText("Score: " + game.getScore());
     }
 
     /**
@@ -197,8 +176,7 @@ public class TetrisUI extends UI {
      */
     protected synchronized void gameOver() {
         running = false;
-        Notification.show("Game Over", "Your score: " + game.getScore(),
-                Type.HUMANIZED_MESSAGE);
+        Notification.show("Game Over! Your score: " + game.getScore());
     }
 
     /**
@@ -208,9 +186,10 @@ public class TetrisUI extends UI {
     protected synchronized void drawGameState() {
 
         // Reset and clear canvas
-        canvas.clear();
-        canvas.setFillStyle(PLAYFIELD_COLOR);
-        canvas.fillRect(0, 0, game.getWidth() * TILE_SIZE + 2, game.getHeight()
+        canvas.getContext().clearRect(0, 0, TILE_SIZE * PLAYFIELD_W, TILE_SIZE * PLAYFIELD_H);
+        canvas.getContext().setFillStyle(PLAYFIELD_COLOR);
+
+        canvas.getContext().fillRect(0, 0, game.getWidth() * TILE_SIZE + 2, game.getHeight()
                 * TILE_SIZE + 2);
 
         // Draw the tetrominoes
@@ -222,8 +201,8 @@ public class TetrisUI extends UI {
                 if (tile > 0) {
 
                     String color = Tetromino.get(tile).getColor();
-                    canvas.setFillStyle(color);
-                    canvas.fillRect(x * TILE_SIZE + 1, y * TILE_SIZE + 1,
+                    canvas.getContext().setFillStyle(color);
+                    canvas.getContext().fillRect(x * TILE_SIZE + 1, y * TILE_SIZE + 1,
                             TILE_SIZE - 2, TILE_SIZE - 2);
                 }
 

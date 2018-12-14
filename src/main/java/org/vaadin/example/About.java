@@ -1,18 +1,18 @@
 package org.vaadin.example;
 
-import org.vaadin.viritin.components.DisclosurePanel;
-import org.vaadin.viritin.label.RichText;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
 
 
 /**
  *
  * @author Matti Tahvonen
  */
-public class About extends DisclosurePanel {
+public class About extends Div {
 
     public About() {
-        setCaption("Server side Tetris game, WTF!?");
-        setContent(new RichText().withMarkDownResource("/about.md"));
+        setText("A server side Tetris game, WTF!? ");
+        add(new Anchor("https://github.com/mstahv/VaadinTetris", "GitHub page"));
     }
 
 }
