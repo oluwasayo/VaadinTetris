@@ -81,12 +81,12 @@ public class MainView extends VerticalLayout {
         Shortcut.add(this, Key.ARROW_UP, rotateCCWBtn::click);
 
         // Button for dropping the piece
-        final Button dropBtn = new Button("[space]", VaadinIcon.ARROW_DOWN.create());
+        final Button dropBtn = new Button("[D]", VaadinIcon.ARROW_DOWN.create());
         dropBtn.addClickListener(e -> {
             game.drop();
             drawGameState();
         });
-        Shortcut.add(this, Key.SPACE, dropBtn::click);
+        Shortcut.add(this, Key.of("d"), dropBtn::click);
 
         // Button for restarting the game
         final Button restartBtn = new Button(VaadinIcon.PLAY.create());
@@ -110,8 +110,6 @@ public class MainView extends VerticalLayout {
 
         // Canvas for the game
         canvas = new Canvas(TILE_SIZE * PLAYFIELD_W, TILE_SIZE * PLAYFIELD_H);
-        canvas.setWidth(TILE_SIZE * PLAYFIELD_W + "px");
-        canvas.setHeight(TILE_SIZE * PLAYFIELD_H + "px");
 
         // Label for score
         scoreLabel = new Span("");
