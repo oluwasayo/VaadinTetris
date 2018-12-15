@@ -1,5 +1,7 @@
 package org.vaadin.example;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -10,7 +12,10 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.page.Push;
+import com.vaadin.flow.component.page.Viewport;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.PWA;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.shared.ui.Transport;
 import org.vaadin.marcus.shortcut.Shortcut;
 import org.vaadin.pekkam.Canvas;
@@ -20,14 +25,14 @@ import java.util.Arrays;
 // The most efficient transport system
 @Push(transport = Transport.WEBSOCKET)
 @Route
+@PWA(name = "Vaadin Tetris", shortName = "Tetris", themeColor = "lightblue")
+@Viewport("width=device-width, minimum-scale=1, initial-scale=1, user-scalable=no, minimal-ui")
 public class MainView extends VerticalLayout {
 
     private static final int PAUSE_TIME_MS = 500;
 
     private static final long serialVersionUID = -152735180021558969L;
 
-    // Tile size in pixels
-    protected static final int TILE_SIZE = 30;
 
     // Playfield width in tiles
     private static final int PLAYFIELD_W = 10;
@@ -38,9 +43,12 @@ public class MainView extends VerticalLayout {
     // Playfield background color
     private static final String PLAYFIELD_COLOR = "#000";
 
+    // Tile size in pixels
+    private int tileSize = 30;
+
     private Canvas canvas;
-    protected boolean running;
-    protected Game game;
+    private boolean running;
+    private Game game;
 
     private Span scoreLabel;
 
@@ -103,12 +111,12 @@ public class MainView extends VerticalLayout {
         });
 
         // Canvas for the game
-        canvas = new Canvas(TILE_SIZE * PLAYFIELD_W, TILE_SIZE * PLAYFIELD_H);
+        canvas = new Canvas(tileSize * PLAYFIELD_W, tileSize * PLAYFIELD_H);
+        add(canvas);
 
         // Label for score
-        scoreLabel = new Span("");
+        scoreLabel = new Span("Score: 0");
         add(scoreLabel);
-        add(canvas);
 
         styleControlButtons(restartBtn, leftBtn, rightBtn, rotateCCWBtn, rotateCWBtn, dropBtn);
         rotateCWBtn.addClassName("dominant-control");
@@ -127,7 +135,30 @@ public class MainView extends VerticalLayout {
         controlsPanel.setWidth(canvas.getWidth());
 
         add(controlsPanel);
+
         setAlignItems(Alignment.CENTER);
+        getStyle().set("overflow", "hidden");
+    }
+
+    @Override
+    public void onAttach(AttachEvent event) {
+        UI.getCurrent().getPage().executeJavaScript(
+                        "const viewPortHeight = window.innerHeight;" +
+                        "const aboutTextHeight = document.querySelectorAll('div')[1].offsetHeight;" +
+                        "const scoreLabelHeight = document.querySelector('span').offsetHeight;" +
+                        "const controlsPanelHeight = document.querySelector('vaadin-horizontal-layout').offsetHeight;" +
+                        "const befittingCanvasHeight = viewPortHeight - aboutTextHeight - scoreLabelHeight - controlsPanelHeight - 50;" +
+                        "$0.$server.updateCanvasHeight(befittingCanvasHeight);", this);
+    }
+
+    @ClientCallable
+    public void updateCanvasHeight(int befittingCanvasHeight) {
+        int currentCanvasHeight = tileSize * PLAYFIELD_H;
+        double scalingFactor = (double) (befittingCanvasHeight) / currentCanvasHeight;
+        tileSize *= scalingFactor;
+        remove(canvas);
+        canvas = new Canvas(tileSize * PLAYFIELD_W, tileSize * PLAYFIELD_H);
+        addComponentAtIndex(1, canvas);
     }
 
     private void styleControlButtons(Button... buttons) {
@@ -200,11 +231,11 @@ public class MainView extends VerticalLayout {
     protected synchronized void drawGameState() {
 
         // Reset and clear canvas
-        canvas.getContext().clearRect(0, 0, TILE_SIZE * PLAYFIELD_W, TILE_SIZE * PLAYFIELD_H);
+        canvas.getContext().clearRect(0, 0, tileSize * PLAYFIELD_W, tileSize * PLAYFIELD_H);
         canvas.getContext().setFillStyle(PLAYFIELD_COLOR);
 
-        canvas.getContext().fillRect(0, 0, game.getWidth() * TILE_SIZE + 2, game.getHeight()
-                * TILE_SIZE + 2);
+        canvas.getContext().fillRect(0, 0, game.getWidth() * tileSize + 2, game.getHeight()
+                * tileSize + 2);
 
         // Draw the tetrominoes
         Grid state = game.getCurrentState();
@@ -216,8 +247,8 @@ public class MainView extends VerticalLayout {
 
                     String color = Tetromino.get(tile).getColor();
                     canvas.getContext().setFillStyle(color);
-                    canvas.getContext().fillRect(x * TILE_SIZE + 1, y * TILE_SIZE + 1,
-                            TILE_SIZE - 2, TILE_SIZE - 2);
+                    canvas.getContext().fillRect(x * tileSize + 1, y * tileSize + 1,
+                            tileSize - 2, tileSize - 2);
                 }
 
             }
