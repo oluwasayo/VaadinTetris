@@ -42,6 +42,9 @@ public class MainView extends VerticalLayout {
     private Span scoreLabel;
 
     public MainView() {
+        setSizeFull();
+        setAlignItems(Alignment.CENTER);
+
         add(new About());
 
         // Button for moving left
@@ -124,40 +127,30 @@ public class MainView extends VerticalLayout {
      */
     protected synchronized void startGameThread() {
         UI ui = UI.getCurrent();
-        Thread t = new Thread() {
-            public void run() {
+        Thread t = new Thread(() -> {
 
-                // Continue until stopped or game is over
-                while (running && !game.isOver()) {
+            // Continue until stopped or game is over
+            while (running && !game.isOver()) {
 
-                    // Draw the state
-                    ui.access(() -> {
-                        drawGameState();
-                    }
-                    );
+                // Draw the state
+                ui.access(this::drawGameState);
 
-                    // Pause for a while
-                    try {
-                        sleep(PAUSE_TIME_MS);
-                    } catch (InterruptedException igmored) {
-                    }
-
-                    // Step the game forward and update score
-                    game.step();
-                    ui.access(() -> {
-                        updateScore();
-                    });
-
+                // Pause for a while
+                try {
+                    Thread.sleep(PAUSE_TIME_MS);
+                } catch (InterruptedException ignored) {
                 }
 
-                // Notify user that game is over
-                ui.access(() -> {
-                    gameOver();
-                });
-            }
-        };
-        t.start();
+                // Step the game forward and update score
+                game.step();
+                ui.access(this::updateScore);
 
+            }
+
+            // Notify user that game is over
+            ui.access(this::notifyGameOver);
+        });
+        t.start();
     }
 
     /**
@@ -168,13 +161,16 @@ public class MainView extends VerticalLayout {
         scoreLabel.setText("Score: " + game.getScore());
     }
 
+    protected synchronized void notifyGameOver() {
+        Notification.show("Game Over! Your score: " + game.getScore());
+    }
+
     /**
      * Quit the game.
      *
      */
     protected synchronized void gameOver() {
         running = false;
-        Notification.show("Game Over! Your score: " + game.getScore());
     }
 
     /**
