@@ -6,6 +6,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.HtmlImport;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -16,6 +17,7 @@ import com.vaadin.flow.component.page.Viewport;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.shared.ui.Transport;
+import org.vaadin.firitin.layouts.BorderLayout;
 import org.vaadin.marcus.shortcut.Shortcut;
 import org.vaadin.pekkam.Canvas;
 
@@ -26,6 +28,7 @@ import java.util.Arrays;
 @Route
 @PWA(name = "Vaadin Tetris", shortName = "Tetris", themeColor = "lightblue")
 @Viewport("width=device-width, minimum-scale=1, initial-scale=1, user-scalable=no, minimal-ui")
+@HtmlImport("frontend://custom-style.html")
 public class MainView extends VerticalLayout {
 
     private static final int PAUSE_TIME_MS = 500;
@@ -123,10 +126,10 @@ public class MainView extends VerticalLayout {
         restartBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
 
         final BorderLayout cursorsPanel = new BorderLayout();
-        cursorsPanel.addNorth(rotateCCWBtn);
-        cursorsPanel.addSouth(dropBtn);
-        cursorsPanel.addEast(rightBtn);
-        cursorsPanel.addWest(leftBtn);
+        cursorsPanel.setChildAt(BorderLayout.Region.NORTH, rotateCCWBtn);
+        cursorsPanel.setChildAt(BorderLayout.Region.SOUTH, dropBtn);
+        cursorsPanel.setChildAt(BorderLayout.Region.EAST, rightBtn);
+        cursorsPanel.setChildAt(BorderLayout.Region.WEST, leftBtn);
 
         final HorizontalLayout controlsPanel = new HorizontalLayout(cursorsPanel, restartBtn, rotateCWBtn);
         controlsPanel.setAlignItems(Alignment.CENTER);
