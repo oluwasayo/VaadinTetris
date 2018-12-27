@@ -15,7 +15,6 @@ import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.page.Viewport;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
-import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.shared.ui.Transport;
 import org.vaadin.marcus.shortcut.Shortcut;
 import org.vaadin.pekkam.Canvas;
@@ -89,6 +88,7 @@ public class MainView extends VerticalLayout {
 
         // Button for dropping the piece
         final Button dropBtn = new Button(VaadinIcon.ARROW_DOWN.create());
+
         dropBtn.addClickListener(e -> {
             game.drop();
             drawGameState();
@@ -147,7 +147,7 @@ public class MainView extends VerticalLayout {
                         "const aboutTextHeight = document.querySelectorAll('div')[1].offsetHeight;" +
                         "const scoreLabelHeight = document.querySelector('span').offsetHeight;" +
                         "const controlsPanelHeight = document.querySelector('vaadin-horizontal-layout').offsetHeight;" +
-                        "const befittingCanvasHeight = viewPortHeight - aboutTextHeight - scoreLabelHeight - controlsPanelHeight - 50;" +
+                        "const befittingCanvasHeight = viewPortHeight - aboutTextHeight - scoreLabelHeight - controlsPanelHeight - 60;" +
                         "$0.$server.updateCanvasHeight(befittingCanvasHeight);", this);
     }
 
@@ -171,40 +171,30 @@ public class MainView extends VerticalLayout {
      */
     protected synchronized void startGameThread() {
         UI ui = UI.getCurrent();
-        Thread t = new Thread() {
-            public void run() {
+        Thread t = new Thread(() -> {
 
-                // Continue until stopped or game is over
-                while (running && !game.isOver()) {
+            // Continue until stopped or game is over
+            while (running && !game.isOver()) {
 
-                    // Draw the state
-                    ui.access(() -> {
-                        drawGameState();
-                    }
-                    );
+                // Draw the state
+                ui.access(this::drawGameState);
 
-                    // Pause for a while
-                    try {
-                        sleep(PAUSE_TIME_MS);
-                    } catch (InterruptedException igmored) {
-                    }
-
-                    // Step the game forward and update score
-                    game.step();
-                    ui.access(() -> {
-                        updateScore();
-                    });
-
+                // Pause for a while
+                try {
+                    Thread.sleep(PAUSE_TIME_MS);
+                } catch (InterruptedException ignored) {
                 }
 
-                // Notify user that game is over
-                ui.access(() -> {
-                    gameOver();
-                });
-            }
-        };
-        t.start();
+                // Step the game forward and update score
+                game.step();
+                ui.access(this::updateScore);
 
+            }
+
+            // Notify user that game is over
+            ui.access(this::notifyGameOver);
+        });
+        t.start();
     }
 
     /**
@@ -215,13 +205,16 @@ public class MainView extends VerticalLayout {
         scoreLabel.setText("Score: " + game.getScore());
     }
 
+    protected synchronized void notifyGameOver() {
+        Notification.show("Game Over! Your score: " + game.getScore());
+    }
+
     /**
      * Quit the game.
      *
      */
     protected synchronized void gameOver() {
         running = false;
-        Notification.show("Game Over! Your score: " + game.getScore());
     }
 
     /**
